@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>测试页面，用json数据载入流程图</title>
+	</head>
+	
+	<body>
+		<textarea id="textareaId" cols="120", rows="40">没有点击保存流程按钮</textarea><br />
+		<button id="loadBtn">加载</button>
+		<button id="closeBtn">取消</button>
+	</body>
+	
+	<script type="text/javascript" src="../js/component/jquery-1.11.0.min.js"></script>
+	<script>
+		$(function() {
+			let flowDoc = parent.FLOW.getCurrentFlow();
+			$("#textareaId").val(JSON.stringify(flowDoc));
+		})
+		
+		$("#closeBtn").click(function() {
+			//获取窗口索引
+		    let index = parent.layer.getFrameIndex(window.name);
+		    //关闭弹出的子页面窗口
+		    parent.layer.close(index);
+		});
+		
+		$("#loadBtn").click(function() {
+			parent.FLOW.removeAll();
+			parent.FLOW.loadJson(JSON.parse($("#textareaId").val()));
+			//获取窗口索引
+		    let index = parent.layer.getFrameIndex(window.name);
+		    //关闭弹出的子页面窗口
+		    parent.layer.close(index);
+		});
+	</script>
+	
+</html>

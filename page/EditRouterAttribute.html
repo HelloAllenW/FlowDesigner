@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>属性编辑</title>
+
+		<link rel="stylesheet" href="../plugings/layui/css/layui.css" />
+
+	</head>
+
+	<body>
+		<div style="width: 90%; margin: 0 auto;">
+			<form class="layui-form">
+				<div class="layui-form-item">
+					<label class="layui-form-label">路由名称：</label>
+					<div class="layui-input-block">
+						<input id="textId" type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入文本信息" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button id="confirmId" class="layui-btn">确认</button>
+						<button id="cancerId" class="layui-btn">取消</button>
+						<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+
+	<script type="text/javascript" src="../js/component/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript" src="../plugings/layui/layui.all.js"></script>
+	<script type="text/javascript" src="../js/main/util/zfsn-util-layui.js"></script>
+	
+	<script>
+		let _base = parent.FLOW._base;
+		let eleId;
+		let t;
+		$(function() {
+			eleId = parent.layuiUtil.tempId;
+			
+			// 回显路由文本值
+			t = parent.plumbUtil.getRouterLabel(parent.$(eleId).attr('sourceId'), parent.$(eleId).attr('targetId'));
+			$('#textId').val(t);
+		});
+		
+		$("#confirmId").click(function() {
+			let val = $('#textId').val().trim();
+			// 当前并没有更改任何内容或者更改后的内容去掉前后空格与更改前一致，此时不会执行更改函数
+			if (val != t) {
+				// 修改保存状态为未保存，将当前流程对象放入可撤销数组中
+				parent.$("#saveStatus").css('display', '');
+				_base.undoStack.push(parent.FLOW.getCurrentFlow());
+				
+				// 设置新文本
+				parent.plumbUtil.setRouterLabel(parent.$(eleId).attr('sourceId'), parent.$(eleId).attr('targetId'), val);
+			}
+			
+			// 关闭弹窗
+			layuiUtil.closeFrame();
+		});
+		
+		// 点击取消
+		$('#cancerId').click(function() {
+			// 关闭弹窗
+			layuiUtil.closeFrame();
+		});
+	</script>
+	
+</html>

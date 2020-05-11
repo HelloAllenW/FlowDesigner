@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>联科流程设计器</title>
+		
+		<link rel="icon" href="../images/favicon.ico">
+		<link rel="stylesheet" href="../css/node.css" />
+		<link rel="stylesheet" href="../plugings/layui/css/layui.css" />
+		<link href="../plugings/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+		<link href="../plugings/jquery-ui-1.12.1.custom/jquery-ui.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="../css/web.contextmenu.css" />
+
+		<style>
+			html,body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				background-color: #eeeeee;
+			}
+			
+			/* 页头 */
+			.header {
+				clear: both;
+				height: 60px;
+				z-index: 1000;
+				background-color: #36507c;
+			}
+			
+			/* 页中 */
+			.middle {
+				height: 90%;
+			}
+			.middle #toolsBurId {
+				float: left;
+				width: 15%;
+				height: 100%;
+			}
+			.middle #canvasId {
+				float: left;
+				width: 63%;
+				height: 100%;
+				
+				/* 边框 */
+				border: 1px solid gray;
+				/* 网格背景图 */
+				background-image: url(../images/grid.jpeg);
+				/* 铺满 */
+				background-repeat: repeat;
+				/* 设置画布可滚动 */
+				overflow: scroll;
+				/* 设置层叠等级 */
+				z-index: -1;
+			}
+			.middle #attrPanelId {
+				float: right;
+				width: 20%;
+				height: 100%;
+				margin-right: 20px;
+			}
+			#Container {
+				height: 1000%;
+				width: 1000%;
+				position: relative;
+			}
+			
+			/* 页脚 */
+			.foot {
+				clear: both;
+				text-align: center;
+				margin: 8px;
+			}
+			
+			/* logo */
+			.logo {
+				padding: 15px;
+			}
+			.logo img {
+				margin-right: 20px;
+				height: 40px;
+			}
+			.logo span {
+				color: white;
+				font-size: 20px;
+				padding-left: 10px;
+				font-weight: bolder;
+				border-left: 1px #cecece solid;
+			}
+			
+			/* 修改图标大小 */
+			.fa-2x {
+				font-size: 1.5em;
+			}
+			/* 修改按钮组的背景色 */
+			.layui-nav {
+				background-color: #36507C;
+			}
+			/* 未保存标识位置调整 */
+			.layui-nav .layui-badge, .layui-nav .layui-badge-dot {
+				margin: -8px 25px 0;
+			}
+			/* 属性tab页调整 */
+			.layui-tab {
+				height: 100%;
+				margin: 0;
+			}
+			
+			/* 鼠标、连线工具 */
+			#unableDraggableDiv, #enableDraggableDiv {
+				margin: 5px;
+				float: left;
+				width: 40%;
+				cursor: pointer;
+			}
+			
+			/* 可移动放置的节点 */
+			.controler {
+				cursor: move;
+				height: 50px;
+				text-align: center;
+			}
+			.controler > div {
+				margin-left: 50px;
+				margin-top: 8px;
+			}
+			.controler .descTxt {
+				padding: 15px;
+			}
+			
+			.nodeTextCla {
+				display: table-cell;
+				vertical-align: middle;
+				line-height: 20px;
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<div style="height: 100%;">
+			<!--页头-->
+			<div class="header">
+				<!-- logo -->
+				<div class="logo">
+					<img src="../images/logo.png" />
+					<span>联科流程设计器</span>
+				</div>
+				<!-- 右侧头部区域 -->
+				<ul class="layui-nav layui-layout-right">
+					<li class="layui-nav-item">
+						<!-- FLOW 方法在zfsn-flow.js中加载在了window下 -->
+						<a href="javascript: FLOW.save();">
+							<i class="fa fa-check fa-2x iconClass showItemTxt" aria-hidden="true" type="3">
+								<span id="saveStatus" class="layui-badge-dot" style="display: none;"></span>
+							</i>
+							<span hidden="hidden">保存流程</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: FLOW.save2Photo();" download="myFlow">
+							<i class="fa fa-file-image-o fa-2x iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">保存为图片</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: FLOW.undo();">
+							<i class="fa fa-reply fa-2x iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">撤销</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: FLOW.redo();">
+							<i class="fa fa-share fa-2x iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">重做</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: FLOW.clearCanvas();">
+							<i class="fa fa-refresh fa-2x fa-fw iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">重新绘制</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<!-- 样式在 zfsn-flow.js 的changeGrid方法中定义；-->
+						<a id="showGridId" href="javascript: FLOW.changeGrid();">
+							<i class="fa fa-eye fa-2x iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">隐藏网格</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: layuiUtil.setting();">
+							<i class="fa fa-cog fa-2x fa-fw iconClass showItemTxt" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">设置</span>
+						</a>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: void(0);">
+							<i class="fa fa-question-circle fa-2x iconClass" aria-hidden="true"></i>
+							<span hidden="hidden">帮助</span>
+						</a>
+						<dl class="layui-nav-child">
+							<dd>
+								<a href="javascript: layuiUtil.helpDoc();"><p>帮助文档</p></a>
+							</dd>
+							<dd>
+								<a href="javascript: layuiUtil.shortcutKey();"><p>快捷键大全</p></a>
+							</dd>
+						</dl>
+					</li>
+					<li class="layui-nav-item">
+						<a href="javascript: FLOW.exit();">
+							<i class="fa fa-sign-out fa-2x showItemTxt iconClass" aria-hidden="true" type="3"></i>
+							<span hidden="hidden">退出</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+			
+			<!--页中-->
+			<div class="middle">
+				<!-- 左侧导航区域 -->
+				<div id="toolsBurId">
+					<div class="layui-card" style="margin: 10px; background-color: #F2F2F2;">
+						<div class="layui-card-header">工具箱</div>
+						<div class="layui-card-body" style="height: 35px;">
+							<div id="unableDraggableDiv" align="center">
+								<i id="mouseToolsBtn" class="fa fa-mouse-pointer fa-2x showItemTxt" aria-hidden="true" type="3"></i>
+								<span class="nodeSpan" style="display: none;">鼠标工具</span>
+							</div>
+							<div id="enableDraggableDiv" align="center">
+								<i id="connectionToolsBtn" class="fa fa-exchange fa-2x showItemTxt" aria-hidden="true" type="3"></i>
+								<span class="nodeSpan" style="display: none;">连线工具</span>
+							</div>
+						</div>
+					</div>
+					<div class="layui-collapse" lay-accordion="">
+						<div class="layui-colla-item" style="clear: both;">
+							<h2 class="layui-colla-title">节点</h2>
+							<div class="layui-colla-content layui-show">
+								<div class="controler">
+									<div id="start" class="startNode"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">开始</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="end" class="endNode"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">结束</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="gateWay" class="gateWayNode" style="margin-left: 65px; margin-top: 15px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">网关</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="event" class="eventNode"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">事件</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="comm" class="commNode" style="width: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">人工节点</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="freedom" class="commNode" style="width: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">自动节点</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="layui-colla-item">
+							<h2 class="layui-colla-title">子流程</h2>
+							<div class="layui-colla-content">
+								<div class="controler">
+									<div id="innerChildFlow" class="innerChildFlowNode" style="width: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">内部子流程</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="outerChildFlow" class="outerChildFlowNode" style="width: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">外部子流程</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="layui-colla-item">
+							<h2 class="layui-colla-title">泳道</h2>
+							<div class="layui-colla-content">
+								<div class="controler">
+									<div id="broadwiseLane" class="broadwiseLaneNode" style="width: 30px; height: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">横向泳道</span>
+									</div>
+								</div>
+								<div class="controler">
+									<div id="directionLane" class="directionLaneNode" style="width: 30px; height: 30px;"></div>
+									<div class="descTxt">
+										<span class="nodeSpan">纵向泳道</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--中间绘制区域-->
+				<div id="canvasId">
+					<div id="Container"></div>
+				</div>
+				<!--右侧属性区域-->
+				<div id="attrPanelId">
+					<div class="layui-tab layui-tab-card">
+						<ul class="layui-tab-title">
+							<li class="layui-this">属性</li>
+							<li>样式</li>
+						</ul>
+						<div class="layui-tab-content" style="height: 100px;">
+							<div class="layui-tab-item layui-show">
+								<form id="attrForm" class="layui-form"></form>
+							</div>
+							<div class="layui-tab-item">
+								<form id="cssForm" class="layui-form"></form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!--页脚-->
+			<div class="foot">
+				<p>流程绘制器 V2.0 Powered By ZSFN</p>
+			</div>
+		</div>
+	</body>
+	
+	<!-- 注意load.js要放在最后面 -->
+	<!-- Sugar.js 
+		是一个用于开发前端模块化 UI 组件的轻量级 JavaScript 框架 ( mvvm & template )
+		1、sugar/main 实现组件系统的底层架构，包括组件的继承机制，视图的定义、初始化、渲染，组件间的消息通信、Ajax 
+		异步请求等基础功能。
+		2、sugar/mvvm 一个利用数据绑定 + 视图刷新实现的 MVVM 库，指令的名称和用法与尤大的 Vue.js 相似，
+		但实现的细节和依赖监听机制有很大的不同。
+	-->
+	<script type="text/javascript" src="../js/component/sugar.min.js"></script>
+	<script type="text/javascript" src="../js/component/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript" src="../js/component/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="../js/component/jquerymy-1.2.14.min.js"></script>
+	<script type="text/javascript" src="../js/component/jsplumb.min.js"></script>
+	<script type="text/javascript" src="../plugings/layui/layui.all.js"></script>
+	<!-- Web右键菜单插件 -->
+	<script type="text/javascript" src="../js/component/web.contextmenu.js"></script>
+	<!-- Graphlib是一个用于直接或间接地制作或修改图画的javascript库 -->
+	<script type="text/javascript" src="../js/component/graphlib.min.js"></script>
+	<!-- HTML 代码转换成 Canvas，进而生成可保存分享的图片 -->
+	<script type="text/javascript" src="../js/component/html2canvas.min.js"></script>
+	<!-- svg 转 图片 -->
+	<script type="text/javascript" src="../js/component/canvg.js"></script>
+
+
+	<!-- 封装的 jsplumb 的相关配置 -->
+	<script type="text/javascript" src="../config/config.js" ></script>
+	<!-- 封装的右击 节点或连接线 出现的属性 -->
+	<script type="text/javascript" src="../js/main/RightMenu.js"></script>
+	<!-- 封装的一些工具 -->
+	<script type="text/javascript" src="../js/main/zfsn.js"></script>
+	<!-- 封装的所有方法 -->
+	<script type="text/javascript" src="../js/main/zfsn-flow.js" ></script>
+	<script type="text/javascript" src="../js/main/zfsn-flow-render.js" ></script>
+
+	<!-- 封装的 判断字符串是否为undefined或空字符串或空格 -->
+	<script type="text/javascript" src="../js/main/util/zfsn-util-str.js"></script>
+	<!-- 封装的 所有的弹框 -->
+	<script type="text/javascript" src="../js/main/util/zfsn-util-layui.js"></script>
+	<!-- 实例化并设置 jsplumb -->
+	<script type="text/javascript" src="../js/main/util/zfsn-util-plumb.js"></script>
+	<script type="text/javascript" src="../js/main/util/zfsn-util-graph.js"></script>
+	<script type="text/javascript" src="../js/main/util/zfsn-util-idpool.js"></script>
+	<!-- 根据十六进制颜色获取节点渐变背景样式 -->
+	<script type="text/javascript" src="../js/main/util/zfsn-util-color.js"></script>
+	<!-- 设置节点属性、样式 -->
+	<script type="text/javascript" src="../js/main/util/zfsn-util-attr-cfg.js"></script>
+	
+	<!-- 封装并加载测试数据 -->
+	<script type="text/javascript" src="../json/demoData.js" ></script>
+	<script type="text/javascript" src="../load.js" ></script>
+	
+</html>
